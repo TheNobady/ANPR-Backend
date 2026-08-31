@@ -1,0 +1,51 @@
+{
+  "city": "Agra",
+  "_readme": [
+    "STUB -- a three-camera corridor on Mahatma Gandhi Road, enough to prove the port",
+    "works. Not a surveyed deployment: extend it before using it for anything real.",
+    "",
+    "These positions were produced by the procedure in README.md, section 'Porting to a",
+    "new city': arterial ways pulled from OSM, anchors taken ~1.2 km apart along the",
+    "road, then each camera moved ~110 m back along its approach and ~9 m onto the",
+    "left-hand carriageway. All three snap to the road network within 10 m, which is",
+    "what makes the graphgen heading filter see a real departure bearing.",
+    "",
+    "Do NOT place cameras on intersection centroids. The README explains what that",
+    "costs: roughly 18 edges and 8 isolated cameras, which is what our first attempt",
+    "at Chandigarh produced.",
+    "",
+    "To use: CAMERA_SET=agra, restart, then run the graphgen profile."
+  ],
+  "cameras": [
+    {
+      "camera_id": "AGR_CAM_01",
+      "name": "Rambagh_Crossing",
+      "lat": 27.163447,
+      "lon": 78.008904,
+      "heading_degrees": 359,
+      "zone": "Rambagh",
+      "junction": "Mahatma Gandhi Road",
+      "watches": "NW-bound traffic"
+    },
+    {
+      "camera_id": "AGR_CAM_02",
+      "name": "Yamuna_Bridge_Approach",
+      "lat": 27.174387,
+      "lon": 78.009426,
+      "heading_degrees": 323,
+      "zone": "Balkeshwar",
+      "junction": "Mahatma Gandhi Road",
+      "watches": "NW-bound traffic"
+    },
+    {
+      "camera_id": "AGR_CAM_03",
+      "name": "Water_Works_Crossing",
+      "lat": 27.183101,
+      "lon": 78.002099,
+      "heading_degrees": 323,
+      "zone": "Nehru_Nagar",
+      "junction": "Mahatma Gandhi Road",
+      "watches": "NW-bound traffic"
+    }
+  ]
+}

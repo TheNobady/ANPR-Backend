@@ -1,0 +1,146 @@
+spring:
+  application:
+    name: anpr-backend
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/anpr}
+    username: ${DB_USER:anpr}
+    password: ${DB_PASSWORD:anpr}
+    hikari:
+      maximum-pool-size: 20
+      # Nodes time out after 2s; never let a request block on the pool for longer.
+      connection-timeout: 1500
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      # Flyway owns the schema.
+      ddl-auto: none
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  jackson:
+    default-property-inclusion: always
+
+server:
+  port: ${SERVER_PORT:8000}
+  # A node that has already given up should not hold a worker.
+  tomcat:
+    connection-timeout: 5s
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+# The query API the frontend consumes.
+api:
+  # A hop taking more than this multiple of the edge's typical travel time is reported
+  # as a suspected detour: the vehicle plausibly drove a different route than the
+  # geometry shows.
+  detour-ratio: 1.6
+  # Default and hard cap for vehicle search results.
+  search-limit: 20
+  search-max-limit: 200
+
+# Traffic analytics. Query endpoints read only the aggregate tables these settings
+# shape; they never touch observations or trajectory_events.
+analytics:
+  density-bucket-minutes: 5
+  edge-bucket-minutes: 15
+  od-bucket-minutes: 60
+  # Below this many traversals an edge's duration statistics are written as null.
+  # Three cars do not make a median, and "not enough data" beats a confident wrong number.
+  min-samples: 5
+  # How many recent buckets the scheduled job redoes, so slightly late data is absorbed.
+  rollup-buckets: 3
+  rollup-interval-ms: 60000
+  # Window used when a query gives no range -- the same one live mode polls with.
+  default-window-minutes: 15
+  # Congestion ratio (median travel time / free-flow) band edges.
+  band-moderate: 1.2
+  band-heavy: 1.6
+  band-severe: 2.2
+
+# Alerting.
+alerts:
+  # A repeat of the same alert type for the same vehicle inside this window updates the
+  # existing row instead of creating another. Without it a blacklisted vehicle crossing
+  # eight cameras produces eight alerts and the feed is unreadable within a minute.
+  suppression-window-seconds: 300
+  # How far back to look for another vehicle wearing the same plate.
+  clone-plate-window-seconds: 900
+  # Above this implied speed a link with no road edge is physically impossible.
+  impossible-speed-kmh: 150
+
+# The live Server-Sent Events feed.
+stream:
+  # Only events this close to now are pushed. A backfill or a rebuild produces thousands
+  # of historical events; they are persisted but never streamed.
+  live-window-seconds: 60
+  # Comment frame interval, so an idle connection is not dropped by a proxy mid-demo.
+  heartbeat-seconds: 20
+  # Connections beyond this are refused rather than accumulated.
+  max-emitters: 50
+
+# Identity resolution. Every number here is meant to be tuned: change one, run
+# POST /api/identity/rebuild, then GET /api/identity/evaluate and compare.
+identity:
+  # Total score a candidate must reach to be accepted as the same vehicle.
+  threshold: 4.0
+  # If the runner-up is this close to the winner, both are rejected and a new vehicle
+  # is created. A wrong link corrupts two trajectories; a spurious vehicle only
+  # fragments one.
+  ambiguity-margin: 1.0
+  # How far back the skeleton-equality fallback pool looks, in seconds.
+  fallback-window-seconds: 900
+  # Link confidence at or above which a sighting may move the appearance centroid.
+  centroid-min-confidence: 0.7
+  # Sightings at which a provisional vehicle is promoted to confirmed.
+  confirm-at-sightings: 2
+  scoring:
+    plate-exact: 6.0
+    plate-skeleton: 4.0
+    plate-distance1: 2.0
+    plate-distance2: 0.5
+    # Beyond this confusion-weighted edit distance the candidate is vetoed outright,
+    # whatever the appearance and timing say.
+    plate-veto-distance: 2.0
+    travel-weight: 2.0
+    travel-sigma: 0.30
+    appearance-strong: 5.0
+    appearance-weak: 2.0
+    appearance-neutral: 0.0
+    appearance-penalty: -3.0
+    # CALIBRATE THESE AGAINST YOUR EMBEDDING MODEL. They are cosine similarities, and
+    # what counts as "similar" is a property of the model, not a universal constant.
+    #
+    # Measured on the current simulator (512-d, sigma 0.05 per component, renormalised):
+    #   same vehicle      cosine 0.33 .. 0.55, mean 0.44, 5th percentile 0.38
+    #   different vehicle cosine  ~0.00,       99th percentile 0.10, max 0.15
+    # Cleanly separated, but an order of magnitude below the 0.85/0.70/0.50 a real
+    # re-identification model would show: across 512 dimensions the injected noise has a
+    # larger norm than the unit signal, so it dominates. The bands below sit in the gap.
+    #
+    # Re-measure with the query in README, section "Calibrating the appearance scorer",
+    # whenever the embedding model changes -- leaving these at a previous model's values
+    # silently sends every comparison into the penalty band, which costs the whole
+    # null-plate recall figure.
+    appearance-strong-threshold: 0.30
+    appearance-weak-threshold: 0.22
+    appearance-neutral-threshold: 0.15
+
+logging:
+  level:
+    com.anpr.backend: INFO

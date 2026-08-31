@@ -1,0 +1,94 @@
+{
+  "_comment": [
+    "Scripted vehicles for the live demo. These run on top of whatever random background",
+    "traffic is flowing, so the operator sees them in a realistic crowd.",
+    "",
+    "Routes follow real camera_edges, so travel times come from the road graph.",
+    "",
+    "For a deterministic run, turn the random degradation off first:",
+    "  POST /api/sim/start {\"vehiclesPerMinute\": 20, \"ocrErrorRate\": 0, \"nullPlateRate\": 0}",
+    "Otherwise a corrupted or dropped plate read can cost one repeat on the suppression",
+    "count, which is realistic but makes a rehearsed number wobble."
+  ],
+
+  "vehicles": [
+    {
+      "_comment": [
+        "1. IDENTITY RECOVERED WITHOUT A PLATE. Read cleanly at CHD_CAM_09 and CHD_CAM_10,",
+        "loses its plate entirely at CHD_CAM_11, read again at CHD_CAM_12. Resolution has to",
+        "carry it across the gap on appearance and timing alone."
+      ],
+      "plate": "CH01ZZ9999",
+      "type": "car",
+      "colour": "white",
+      "route": ["CHD_CAM_09", "CHD_CAM_10", "CHD_CAM_11", "CHD_CAM_12"],
+      "startDelaySeconds": 30,
+      "forceNullPlateAt": ["CHD_CAM_11"]
+    },
+    {
+      "plate": "PB65AB1234",
+      "type": "truck",
+      "colour": "blue",
+      "route": ["CHD_CAM_01", "CHD_CAM_02", "CHD_CAM_03", "CHD_CAM_04"],
+      "startDelaySeconds": 45,
+      "forceNullPlateAt": []
+    },
+    {
+      "plate": "HR26DK8337",
+      "type": "car",
+      "colour": "silver",
+      "route": ["CHD_CAM_05", "CHD_CAM_01", "CHD_CAM_03", "CHD_CAM_07"],
+      "startDelaySeconds": 60,
+      "forceNullPlateAt": ["CHD_CAM_01", "CHD_CAM_03"]
+    },
+
+    {
+      "_comment": [
+        "2. BLACKLIST HIT, AND SUPPRESSION. CH01AB1234 is seeded into the blacklist by V9",
+        "as a stolen-vehicle report. Five cameras means five matches, which must collapse",
+        "into ONE alert carrying repeat_count 5 -- otherwise a wanted vehicle crossing the",
+        "city buries the feed under its own alerts.",
+        "",
+        "It is a truck, and CHD_CAM_02 sits in Sector_17, so it also trips the seeded",
+        "restricted-zone rule (no heavy vehicles in the commercial core, 08:00-20:00 UTC)."
+      ],
+      "plate": "CH01AB1234",
+      "type": "truck",
+      "colour": "white",
+      "route": ["CHD_CAM_06", "CHD_CAM_03", "CHD_CAM_01", "CHD_CAM_02", "CHD_CAM_04"],
+      "startDelaySeconds": 15,
+      "forceNullPlateAt": []
+    },
+
+    {
+      "_comment": [
+        "3. CLONE PAIR, part A. Same registration as part B, different colour, and a",
+        "different embedding seed so the two genuinely do not look alike. CHD_CAM_09 and",
+        "CHD_CAM_04 are 3.6 km apart with no road edge between them; the two are seen ~15 s",
+        "apart, which is roughly 860 km/h over the ground.",
+        "",
+        "Part B should therefore raise BOTH:",
+        "  impossible_speed          -- the same plate cannot be in two places that fast",
+        "  plate_appearance_mismatch -- the plate matches exactly, the vehicle does not",
+        "with related_vehicle_id on each pointing back at part A."
+      ],
+      "plate": "CH04CL0NE",
+      "type": "car",
+      "colour": "white",
+      "embeddingSeed": "clone-pair-original",
+      "route": ["CHD_CAM_09", "CHD_CAM_10"],
+      "startDelaySeconds": 20,
+      "forceNullPlateAt": []
+    },
+    {
+      "_comment": "3. CLONE PAIR, part B -- the impostor. Same plate, black, deliberately dissimilar.",
+      "plate": "CH04CL0NE",
+      "type": "car",
+      "colour": "black",
+      "embeddingSeed": "clone-pair-impostor",
+      "route": ["CHD_CAM_04", "CHD_CAM_03"],
+      "startDelaySeconds": 35,
+      "forceNullPlateAt": []
+    }
+  ]
+}

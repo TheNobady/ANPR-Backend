@@ -1,0 +1,146 @@
+{
+  "city": "Chandigarh",
+  "_readme": "Camera placement recipe and the reasoning behind the 110 m setback and 9 m carriageway offset are in README.md, section 'Porting to a new city'.",
+  "cameras": [
+    {
+      "camera_id": "CHD_CAM_01",
+      "name": "Sector_22_23_Junction",
+      "lat": 30.740613,
+      "lon": 76.773625,
+      "heading_degrees": 143,
+      "zone": "Sector_22",
+      "junction": "Udyog Path x Jan Marg",
+      "watches": "SE-bound traffic"
+    },
+    {
+      "camera_id": "CHD_CAM_02",
+      "name": "Sector_17_21_Junction",
+      "lat": 30.734222,
+      "lon": 76.779044,
+      "heading_degrees": 143,
+      "zone": "Sector_17",
+      "junction": "Udyog Path x Himalaya Marg",
+      "watches": "SE-bound traffic"
+    },
+    {
+      "camera_id": "CHD_CAM_03",
+      "name": "Sector_18_20_Junction",
+      "lat": 30.728471,
+      "lon": 76.784145,
+      "heading_degrees": 143,
+      "zone": "Sector_20",
+      "junction": "Udyog Path x Sarovar Path",
+      "watches": "SE-bound traffic"
+    },
+    {
+      "camera_id": "CHD_CAM_04",
+      "name": "Sector_19_30_Junction",
+      "lat": 30.722783,
+      "lon": 76.789385,
+      "heading_degrees": 143,
+      "zone": "Sector_19",
+      "junction": "Udyog Path x Sukhna Path",
+      "watches": "SE-bound traffic"
+    },
+    {
+      "camera_id": "CHD_CAM_05",
+      "name": "Sector_9_10_Junction",
+      "lat": 30.745849,
+      "lon": 76.786264,
+      "heading_degrees": 323,
+      "zone": "Sector_10",
+      "junction": "Madhya Marg x Jan Marg",
+      "watches": "NW-bound traffic"
+    },
+    {
+      "camera_id": "CHD_CAM_06",
+      "name": "Sector_8_18_Junction",
+      "lat": 30.739657,
+      "lon": 76.791626,
+      "heading_degrees": 323,
+      "zone": "Sector_18",
+      "junction": "Madhya Marg x Himalaya Marg",
+      "watches": "NW-bound traffic"
+    },
+    {
+      "camera_id": "CHD_CAM_07",
+      "name": "Sector_7_19_Junction",
+      "lat": 30.733827,
+      "lon": 76.796701,
+      "heading_degrees": 323,
+      "zone": "Sector_19",
+      "junction": "Madhya Marg x Sarovar Path",
+      "watches": "NW-bound traffic"
+    },
+    {
+      "camera_id": "CHD_CAM_08",
+      "name": "Sector_19_26_Junction",
+      "lat": 30.728181,
+      "lon": 76.801972,
+      "heading_degrees": 323,
+      "zone": "Sector_26",
+      "junction": "Madhya Marg x Sukhna Path",
+      "watches": "NW-bound traffic"
+    },
+    {
+      "camera_id": "CHD_CAM_09",
+      "name": "Sector_3_4_Junction",
+      "lat": 30.754514,
+      "lon": 76.796236,
+      "heading_degrees": 143,
+      "zone": "Sector_4",
+      "junction": "Vigyan Path x Jan Marg",
+      "watches": "SE-bound traffic"
+    },
+    {
+      "camera_id": "CHD_CAM_10",
+      "name": "Sector_4_5_Junction",
+      "lat": 30.748255,
+      "lon": 76.801477,
+      "heading_degrees": 143,
+      "zone": "Sector_5",
+      "junction": "Vigyan Path x Himalaya Marg",
+      "watches": "SE-bound traffic"
+    },
+    {
+      "camera_id": "CHD_CAM_11",
+      "name": "Sector_5_6_Junction",
+      "lat": 30.742364,
+      "lon": 76.806405,
+      "heading_degrees": 143,
+      "zone": "Sector_6",
+      "junction": "Vigyan Path x Sarovar Path",
+      "watches": "SE-bound traffic"
+    },
+    {
+      "camera_id": "CHD_CAM_12",
+      "name": "Sector_6_26_Junction",
+      "lat": 30.73651,
+      "lon": 76.811295,
+      "heading_degrees": 143,
+      "zone": "Sector_26",
+      "junction": "Vigyan Path x Sukhna Path",
+      "watches": "SE-bound traffic"
+    },
+    {
+      "camera_id": "CHD_CAM_13",
+      "name": "Sector_8_18_Junction_SE",
+      "lat": 30.741296,
+      "lon": 76.790333,
+      "heading_degrees": 143,
+      "zone": "Sector_8",
+      "junction": "Madhya Marg x Himalaya Marg",
+      "watches": "SE-bound traffic"
+    },
+    {
+      "camera_id": "CHD_CAM_14",
+      "name": "Sector_18_20_Junction_NW",
+      "lat": 30.726877,
+      "lon": 76.785503,
+      "heading_degrees": 323,
+      "zone": "Sector_18",
+      "junction": "Udyog Path x Sarovar Path",
+      "watches": "NW-bound traffic"
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+services:
+  postgres:
+    build:
+      context: ./docker/postgres
+    image: anpr/postgis-pgvector:16
+    container_name: anpr-postgres
+    environment:
+      POSTGRES_DB: anpr
+      POSTGRES_USER: anpr
+      POSTGRES_PASSWORD: anpr
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - anpr-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U anpr -d anpr"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  backend:
+    build:
+      context: .
+    image: anpr/backend:0.1.0
+    container_name: anpr-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/anpr
+      DB_USER: anpr
+      DB_PASSWORD: anpr
+      # Which camera-sets/<name>.json CameraSetLoader loads at startup.
+      CAMERA_SET: ${CAMERA_SET:-chandigarh}
+      # The traffic simulator. Demo and development only -- a production deployment
+      # must leave this unset so /api/sim/** does not exist.
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES:-sim}
+      # Appearance thresholds are properties of the embedding model, so they are
+      # overridable without a rebuild. Defaults match application.yml; see the README
+      # section "Calibrating the appearance scorer".
+      IDENTITY_SCORING_APPEARANCESTRONGTHRESHOLD: ${APPEARANCE_STRONG:-0.30}
+      IDENTITY_SCORING_APPEARANCEWEAKTHRESHOLD: ${APPEARANCE_WEAK:-0.22}
+      IDENTITY_SCORING_APPEARANCENEUTRALTHRESHOLD: ${APPEARANCE_NEUTRAL:-0.15}
+      # LOG_LEVEL=DEBUG surfaces the per-request trajectory timing log.
+      LOGGING_LEVEL_COM_ANPR_BACKEND: ${LOG_LEVEL:-INFO}
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+
+volumes:
+  anpr-pgdata:
