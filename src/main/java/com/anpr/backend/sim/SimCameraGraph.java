@@ -47,8 +47,20 @@ public class SimCameraGraph {
         Map<String, Camera> loadedCameras = new LinkedHashMap<>();
         cameraService.findActive().forEach(c -> loadedCameras.put(c.getCameraId(), c));
 
+        // Only edges between cameras in the *active* set. Switching
+        // CAMERA_SET deactivates the previous city's cameras but leaves
+        // their edges in the table (observations reference them), so
+        // walking every edge routes vehicles onto cameras that no longer
+        // exist -- every such event is then dropped at send time. That
+        // silently cost 36% of a backfill before this filter.
         Map<String, List<Hop>> loadedAdjacency = new LinkedHashMap<>();
+        int skipped = 0;
         for (CameraEdge edge : edgeRepository.findAll()) {
+            if (!loadedCameras.containsKey(edge.getFromCameraId())
+                    || !loadedCameras.containsKey(edge.getToCameraId())) {
+                skipped++;
+                continue;
+            }
             loadedAdjacency
                     .computeIfAbsent(edge.getFromCameraId(), k -> new ArrayList<>())
                     .add(new Hop(edge.getToCameraId(), edge.getTTypicalS(),
@@ -60,10 +72,11 @@ public class SimCameraGraph {
         // Starting a journey at a dead end would emit a single lonely event.
         this.startCandidates = loadedAdjacency.keySet().stream().toList();
 
-        log.info("simulator: loaded {} cameras and {} edges from {} origins",
+        log.info("simulator: loaded {} cameras and {} edges from {} origins"
+                        + " ({} edges skipped as outside the active camera set)",
                 loadedCameras.size(),
                 loadedAdjacency.values().stream().mapToInt(List::size).sum(),
-                loadedAdjacency.size());
+                loadedAdjacency.size(), skipped);
     }
 
     public boolean isEmpty() {

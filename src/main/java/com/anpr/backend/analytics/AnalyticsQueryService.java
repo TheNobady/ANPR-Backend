@@ -157,20 +157,46 @@ public class AnalyticsQueryService {
 
     // ------------------------------------------------------------------- density
 
-    public DensityResponse density(Instant requestedFrom, Instant requestedTo, String cameraId) {
-        int minutes = properties.getDensityBucketMinutes();
+    /**
+     * @param requestedBucketMinutes coarser bucket to re-bin into, or null for the
+     *                               stored {@code analytics.density-bucket-minutes}.
+     *                               A day of 5-minute buckets across fifty cameras is
+     *                               fourteen thousand points and unreadable as a trend;
+     *                               re-binning in SQL keeps the response proportional to
+     *                               what the caller can actually plot.
+     */
+    public DensityResponse density(Instant requestedFrom, Instant requestedTo, String cameraId,
+                                   Integer requestedBucketMinutes) {
+        int stored = properties.getDensityBucketMinutes();
+        // Only whole multiples of the stored bucket re-bin cleanly.
+        int minutes = requestedBucketMinutes == null
+                ? stored
+                : Math.max(stored, (requestedBucketMinutes / stored) * stored);
+
         Instant from = snap(requestedFrom, minutes);
         Instant to = requestedTo;
+
+        // date_bin folds the stored buckets into the requested ones. Summing
+        // unique_vehicle_count across buckets over-counts a vehicle present in
+        // several of them -- the same caveat the city-wide series already
+        // carries, and why the frontend labels these sightings.
         List<Map<String, Object>> rows = jdbcTemplate.queryForList("""
-                SELECT d.camera_id, c.name AS camera_name, c.zone, d.bucket_start,
-                       d.observation_count, d.unique_vehicle_count, d.mean_dwell_ms
+                SELECT d.camera_id,
+                       max(c.name)  AS camera_name,
+                       max(c.zone)  AS zone,
+                       date_bin(make_interval(mins => ?), d.bucket_start, ?) AS bucket_start,
+                       sum(d.observation_count)    AS observation_count,
+                       sum(d.unique_vehicle_count) AS unique_vehicle_count,
+                       round(avg(d.mean_dwell_ms)) AS mean_dwell_ms
                   FROM agg_camera_density d
                   LEFT JOIN cameras c ON c.camera_id = d.camera_id
                  WHERE d.bucket_minutes = ?
                    AND d.bucket_start >= ? AND d.bucket_start < ?
                    AND (?::text IS NULL OR d.camera_id = ?::text)
-                 ORDER BY d.camera_id, d.bucket_start
-                """, minutes, Timestamp.from(from), Timestamp.from(to), cameraId, cameraId);
+                 GROUP BY d.camera_id, 4
+                 ORDER BY d.camera_id, 4
+                """, minutes, Timestamp.from(from), stored,
+                Timestamp.from(from), Timestamp.from(to), cameraId, cameraId);
 
         Map<String, List<DensityResponse.Point>> byCamera = new LinkedHashMap<>();
         Map<String, String[]> labels = new LinkedHashMap<>();

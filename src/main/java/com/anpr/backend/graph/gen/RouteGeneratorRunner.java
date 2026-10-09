@@ -47,8 +47,14 @@ public class RouteGeneratorRunner implements CommandLineRunner {
     /** A camera watching one direction must not produce edges for the opposite one. */
     private static final double MAX_HEADING_DEVIATION_DEG = 90.0;
 
-    /** The demo server is a shared free service. */
-    private static final Duration POLITENESS_DELAY = Duration.ofMillis(150);
+    /**
+     * Pause between routing requests. The public demo server is a shared free
+     * service and must be treated gently; a local OSRM container has no such
+     * constraint, and at 0 ms a fifty-camera graph builds in seconds rather
+     * than minutes. Set {@code GRAPHGEN_POLITENESS_MS=0} when OSRM_URL points
+     * at your own instance.
+     */
+    private final Duration politenessDelay;
 
     private static final int T_MIN_FLOOR_S = 15;
     private static final int T_MAX_CEILING_S = 600;
@@ -66,10 +72,13 @@ public class RouteGeneratorRunner implements CommandLineRunner {
     public RouteGeneratorRunner(CameraService cameraService, ObjectMapper objectMapper,
                                 org.springframework.jdbc.core.JdbcTemplate jdbcTemplate,
                                 @org.springframework.beans.factory.annotation.Value(
-                                        "${CAMERA_SET:chandigarh}") String cameraSet) {
+                                        "${CAMERA_SET:chandigarh}") String cameraSet,
+                                @org.springframework.beans.factory.annotation.Value(
+                                        "${GRAPHGEN_POLITENESS_MS:150}") long politenessMs) {
         this.cameraService = cameraService;
         this.jdbcTemplate = jdbcTemplate;
         this.cameraSet = cameraSet;
+        this.politenessDelay = Duration.ofMillis(Math.max(0, politenessMs));
         this.osrm = new OsrmClient(
                 System.getenv().getOrDefault("OSRM_URL", "https://router.project-osrm.org"),
                 objectMapper);
@@ -81,8 +90,10 @@ public class RouteGeneratorRunner implements CommandLineRunner {
                 .filter(c -> c.getLat() != null && c.getLon() != null)
                 .sorted(Comparator.comparing(Camera::getCameraId))
                 .toList();
-        log.info("graphgen: {} cameras, {} ordered pairs to consider",
-                cameras.size(), cameras.size() * (cameras.size() - 1));
+        log.info("graphgen: {} cameras, {} ordered pairs to consider, "
+                        + "{} ms between routing requests",
+                cameras.size(), cameras.size() * (cameras.size() - 1),
+                politenessDelay.toMillis());
 
         Stats stats = new Stats();
         List<Edge> edges = new ArrayList<>();
@@ -124,7 +135,9 @@ public class RouteGeneratorRunner implements CommandLineRunner {
             return Optional.empty();
         }
 
-        Thread.sleep(POLITENESS_DELAY.toMillis());
+        if (!politenessDelay.isZero()) {
+            Thread.sleep(politenessDelay.toMillis());
+        }
         Optional<OsrmRoute> maybeRoute =
                 osrm.route(from.getLat(), from.getLon(), to.getLat(), to.getLon());
         if (maybeRoute.isEmpty()) {

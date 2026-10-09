@@ -1,0 +1,68 @@
+{
+  "vehicles": [
+    {
+      "plate": "CH01AB1234",
+      "type": "truck",
+      "colour": "white",
+      "route": [
+        "TRI_CAM_01",
+        "TRI_CAM_10",
+        "TRI_CAM_06",
+        "TRI_CAM_12",
+        "TRI_CAM_18"
+      ],
+      "startDelaySeconds": 5,
+      "embeddingSeed": "blacklist-lorry"
+    },
+    {
+      "plate": "CH01ZZ9999",
+      "type": "car",
+      "colour": "silver",
+      "route": [
+        "TRI_CAM_01",
+        "TRI_CAM_10",
+        "TRI_CAM_06",
+        "TRI_CAM_12"
+      ],
+      "startDelaySeconds": 20,
+      "forceNullPlateAt": [
+        "TRI_CAM_06"
+      ],
+      "embeddingSeed": "null-plate-car"
+    },
+    {
+      "plate": "CH04CL0NE",
+      "type": "car",
+      "colour": "black",
+      "route": [
+        "TRI_CAM_09",
+        "TRI_CAM_05"
+      ],
+      "startDelaySeconds": 40,
+      "embeddingSeed": "clone-black"
+    },
+    {
+      "plate": "CH04CL0NE",
+      "type": "car",
+      "colour": "white",
+      "route": [
+        "TRI_CAM_50",
+        "TRI_CAM_34"
+      ],
+      "startDelaySeconds": 55,
+      "embeddingSeed": "clone-white"
+    },
+    {
+      "plate": "PB65AB1234",
+      "type": "truck",
+      "colour": "blue",
+      "route": [
+        "TRI_CAM_01",
+        "TRI_CAM_10",
+        "TRI_CAM_06"
+      ],
+      "startDelaySeconds": 70,
+      "embeddingSeed": "zone-truck"
+    }
+  ]
+}

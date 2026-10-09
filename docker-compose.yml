@@ -19,6 +19,27 @@ services:
       retries: 20
       start_period: 10s
 
+  # Local routing engine. Only the graphgen profile talks to it, and
+  # only when regenerating a camera set's road graph -- the running
+  # system never routes. Prepare its data once with
+  # ./scripts/osrm-prepare.sh, which downloads the extract and runs the
+  # three OSRM stages into ./osrm-data.
+  osrm:
+    image: osrm/osrm-backend:latest
+    container_name: anpr-osrm
+    command: osrm-routed --algorithm mld --max-matching-size 5000 /data/region.osrm
+    volumes:
+      - ./osrm-data:/data:ro
+    ports:
+      - "${OSRM_PORT:-5000}:5000"
+    profiles: ["graphgen"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS 'http://localhost:5000/route/v1/driving/76.78,30.74;76.79,30.75' >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
   backend:
     build:
       context: .
@@ -33,6 +54,11 @@ services:
       DB_PASSWORD: anpr
       # Which camera-sets/<name>.json CameraSetLoader loads at startup.
       CAMERA_SET: ${CAMERA_SET:-chandigarh}
+      # Where the graphgen profile looks for a routing engine. Points at
+      # the local container by default; unset it to fall back to the
+      # public demo server (which is rate limited -- see
+      # graphgen.politeness-ms).
+      OSRM_URL: ${OSRM_URL:-http://osrm:5000}
       # The traffic simulator. Demo and development only -- a production deployment
       # must leave this unset so /api/sim/** does not exist.
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES:-sim}

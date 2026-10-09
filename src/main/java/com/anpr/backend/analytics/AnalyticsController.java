@@ -26,6 +26,9 @@ public class AnalyticsController {
 
     private static final int MAX_CONGESTION_ROWS = 200;
 
+    /** A day in one bucket is the coarsest anyone can sensibly ask for. */
+    private static final int MAX_BUCKET_MINUTES = 1440;
+
     private final AnalyticsQueryService analytics;
     private final RollupService rollups;
     private final AnalyticsProperties properties;
@@ -54,13 +57,21 @@ public class AnalyticsController {
         return analytics.congestion(range[0], range[1], Math.clamp(limit, 1, MAX_CONGESTION_ROWS));
     }
 
+    /**
+     * {@code bucket_minutes} re-bins the stored five-minute buckets into something
+     * coarser. Without it a day-wide request across a large camera set returns tens
+     * of thousands of points, nearly all of which the caller immediately folds away.
+     * Values are rounded down to a whole multiple of the stored bucket.
+     */
     @GetMapping("/density")
     public DensityResponse density(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
-            @RequestParam(name = "camera_id", required = false) String cameraId) {
+            @RequestParam(name = "camera_id", required = false) String cameraId,
+            @RequestParam(name = "bucket_minutes", required = false) Integer bucketMinutes) {
         Instant[] range = range(from, to);
-        return analytics.density(range[0], range[1], cameraId);
+        return analytics.density(range[0], range[1], cameraId,
+                bucketMinutes == null ? null : Math.clamp(bucketMinutes, 1, MAX_BUCKET_MINUTES));
     }
 
     @GetMapping("/od")
